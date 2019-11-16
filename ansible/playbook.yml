@@ -1,0 +1,74 @@
+---
+- hosts: license-server
+  remote_user: ubuntu
+  become: true
+  gather_facts: no
+  environment:
+    LC_ALL: "en_US.UTF-8"
+    LANG: "en_US.UTF-8"
+
+  pre_tasks:
+    - name: Install Python
+      raw: sudo apt-get -y install python
+
+  tasks:
+    - name: set timezone to local time
+      timezone:
+        name: Europe/Prague
+    - name: Update core server software
+      apt:
+        upgrade: yes
+        update_cache: yes
+    - name: Install core OS packages
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - language-pack-en-base
+        - software-properties-common
+    - name: Add user to web group
+      user:
+        name: ubuntu
+        groups: www-data
+        append: yes
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        cache_valid_time: 18000
+    - name: Install sqlite
+      apt:
+        name: sqlite
+        state: present
+    - name: Add PHP 7.2 apt repository
+      apt_repository:
+        repo: ppa:ondrej/php
+    - name: Install PHP 7.2 and extensions
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - php7.2
+        - php7.2-common
+        - php7.2-curl
+        - php7.2-fpm
+        - php7.2-gd
+        - php7.2-json
+        - php7.2-mbstring
+        - php7.2-sqlite
+        - php7.2-opcache
+        - php7.2-readline
+        - php7.2-xml
+        - php7.2-zip
+    - name: Install composer
+      script: scripts/install_composer.sh
+    - name: Create web app releases folder
+      file:
+        path: /var/www
+        state: directory
+
+  post_tasks:
+    - name: Check again that all OS packages are updated.
+      apt:
+        upgrade: yes
+        update_cache: yes
