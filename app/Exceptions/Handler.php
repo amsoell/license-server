@@ -39,12 +39,36 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
+     * @param  \Illuminate\Http\Request                                $request
+     * @param  \Exception                                              $exception
      * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
      */
     public function render($request, Exception $exception)
     {
-        return parent::render($request, $exception);
+        $response = [
+            'success' => false,
+            'message' => $exception->getMessage(),
+        ];
+        if (is_object($exception) && method_exists($exception, 'errors')) {
+            $response['errors'] = $exception->errors();
+        }
+        if (config('app.debug')) {
+            $response['detail'] = $exception;
+        }
+        // Set an appropriate status code
+        $status = $exception->status ?? 400;
+        if (method_exists($exception, 'getStatusCode')) {
+            $status = $exception->getStatusCode();
+        }
+        if ($exception instanceof ModelNotFoundException) {
+            $response['message'] = sprintf("%s not found", class_basename($exception->getModel()));
+            $status = 404;
+        } elseif ($exception instanceof AuthorizationException) {
+            $status = 403;
+        } elseif ($exception instanceof TokenMismatchException) {
+            $status = 419;
+        }
+
+        return response()->json($response, $status);
     }
 }
