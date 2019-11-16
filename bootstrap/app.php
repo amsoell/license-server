@@ -60,9 +60,9 @@ $app->singleton(
 //     App\Http\Middleware\ExampleMiddleware::class
 // ]);
 
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+$app->routeMiddleware([
+    'cors' => App\Http\Middleware\Cors::class,
+]);
 
 /*
 |--------------------------------------------------------------------------
@@ -91,7 +91,8 @@ $app->singleton(
 */
 
 $app->router->group([
-    'namespace' => 'App\Http\Controllers',
+    'namespace'  => 'App\Http\Controllers',
+    'middleware' => 'cors',
 ], function ($router) {
     require __DIR__ . '/../routes/api.php';
 });
