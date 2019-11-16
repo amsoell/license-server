@@ -30,6 +30,9 @@ class LicenseController extends Controller
             ],
         ]);
 
-        return response()->json(compact('license', 'checkin'));
+        return response()->json([
+            'success' => true,
+            'data'    => compact('license', 'checkin'),
+        ]);
     }
 }
