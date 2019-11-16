@@ -16,3 +16,9 @@ $factory->define(App\License::class, function () {
         'machine_id' => uniqid(),
     ];
 });
+
+$factory->state(App\License::class, 'invalidated', function () {
+    return [
+        'invalidated_at' => (new DateTime()),
+    ];
+});
