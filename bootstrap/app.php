@@ -22,6 +22,7 @@ $app = new Laravel\Lumen\Application(
 );
 
 $app->configure('app');
+$app->configure('services');
 $app->withEloquent();
 
 /*
