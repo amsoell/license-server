@@ -21,33 +21,46 @@ class LicenseController extends Controller
 
         if ($license->wasRecentlyCreated &&
             $endpoint = config('services.slack.webhook_endpoint')) {
-            $client = new $guzzle();
-            $res = $client->request('POST', $endpoint, [
-                'body' => json_encode([
-                    'blocks' => [
-                        [
-                            'type' => 'section',
-                            'text' => [
-                                'type' => 'mrkdwn',
-                                'text' => 'New license issued',
+            $fields = [
+                [
+                    'type' => 'mrkdwn',
+                    'text' => sprintf("*IP:*\n%s", $request->ip()),
+                ],
+                [
+                    'type' => 'mrkdwn',
+                    'text' => sprintf("*Machine ID:*\n%s", $machine_id),
+                ],
+            ];
+
+            try {
+                if (($ipstack_api_key = config('services.ipstack.api_key')) &&
+                    ($response = (new $guzzle())->request('POST', sprintf('http://api.ipstack.com/%s?access_key=%s', $request->ip(), $ipstack_api_key))) &&
+                    ($location = json_decode($response->getBody()->getContents()))) {
+                    $fields[] = [
+                        'type' => 'mrkdwn',
+                        'text' => sprintf("*Location:*\n%s", $location->city ?? $location->country ?? 'unknown'),
+                    ];
+                }
+
+                (new $guzzle())->request('POST', $endpoint, [
+                    'body' => json_encode([
+                        'blocks' => [
+                            [
+                                'type' => 'section',
+                                'text' => [
+                                    'type' => 'mrkdwn',
+                                    'text' => 'New license issued',
+                                ],
+                            ],
+                            [
+                                'type'   => 'section',
+                                'fields' => $fields,
                             ],
                         ],
-                        [
-                            'type'   => 'section',
-                            'fields' => [
-                                [
-                                    'type' => 'mrkdwn',
-                                    'text' => sprintf("*IP:*\n%s", $request->ip()),
-                                ],
-                                [
-                                    'type' => 'mrkdwn',
-                                    'text' => sprintf("*Machine ID:*\n%s", $machine_id),
-                                ],
-                            ],
-                        ],
-                    ],
-                ]),
-            ]);
+                    ]),
+                ]);
+            } catch (\Exception $exception) {
+            }
         }
 
         if ( ! $license->is_valid) {
@@ -59,6 +72,7 @@ class LicenseController extends Controller
                 'ip'        => $request->ip(),
                 'fullUrl'   => $request->fullUrl(),
                 'userAgent' => $request->userAgent(),
+                'location'  => $location ?? null,
             ],
         ]);
 
