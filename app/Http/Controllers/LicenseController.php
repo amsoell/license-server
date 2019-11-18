@@ -24,7 +24,28 @@ class LicenseController extends Controller
             $client = new $guzzle();
             $res = $client->request('POST', $endpoint, [
                 'body' => json_encode([
-                    'text' => sprintf('New license issued: %s', $machine_id),
+                    'blocks' => [
+                        [
+                            'type' => 'section',
+                            'text' => [
+                                'type' => 'mrkdwn',
+                                'text' => 'New license issued',
+                            ],
+                        ],
+                        [
+                            'type'   => 'section',
+                            'fields' => [
+                                [
+                                    'type' => 'mrkdwn',
+                                    'text' => sprintf("*IP:*\n%s", $request->ip()),
+                                ],
+                                [
+                                    'type' => 'mrkdwn',
+                                    'text' => sprintf("*Machine ID:*\n%s", $machine_id),
+                                ],
+                            ],
+                        ],
+                    ],
                 ]),
             ]);
         }
