@@ -28,6 +28,7 @@ class LicenseController extends Controller
                 'fullUrl'   => $request->fullUrl(),
                 'userAgent' => $request->userAgent(),
                 'location'  => $location ?? null,
+                'appData'   => json_decode($request->getContent()),
             ],
         ]);
 
